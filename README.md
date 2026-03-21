@@ -4,11 +4,11 @@ This project provides a clean interface for tracking athletes, events, and resul
 
 # Project Structure
 The repository is organized into two main components:
-  ~ frontend: contains the user interface 
-  ~ backend: the core of the application
+  - frontend: contains the user interface 
+  - backend: the core of the application
 
 # Key Functionalities
 The application allows users to interact with the Olympic database through the following features:
-  ~ add new athletes
-  ~ result tracking
-  ~ data Persistence
+  - add new athletes
+  - result tracking
+  - data Persistence
