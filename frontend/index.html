@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"> 
+    <title>Milano Cortina 2026 - Athlete Management</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="splash-screen">
+        <div class="splash-content">
+            <h1>Milano - Home of the Olympic Games</h1>
+            <div class="loader"></div>
+        </div>
+    </div>
+    <header>
+        <h1>Milano Cortina 2026 - Athlete Management</h1>
+    </header>
+    <main>
+        <section id="edit-section" style="display: none; background-color: #fff9eb; border: 2px solid #d69e2e;">
+            <h2> Editing Athlete Profile</h2>
+            <div class="horizontal-form">
+                <input type="hidden" id="edit-athlete-id">
+                <div class="input-group">
+                    <label>New First Name:</label>
+                    <input type="text" id="edit-fName">
+                </div>
+                <div class="input-group">
+                    <label>New Last Name:</label>
+                    <input type="text" id="edit-lName">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="btnSaveEdit" class="btn-primary" style="background-color: #28a745;">Save Changes</button>
+                    <button id="btnCancelEdit" class="edit-btn">Cancel</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="form-atlet">
+            <h2>1. Register New Athlete</h2>
+            <div class="horizontal-form">
+                <div class="input-group">
+                    <label for="fName">First Name:</label>
+                    <input type="text" id="fName" placeholder="e.g. John">
+                </div>
+                <div class="input-group">
+                    <label for="lName">Last Name:</label>
+                    <input type="text" id="lName" placeholder="e.g. Doe">
+                </div>
+                <div class="input-group">
+                    <label for="countryId">Country:</label>
+                    <select id="countryId"></select>
+                </div>
+                <div class="input-group">
+                    <label for="sportId">Sport:</label>
+                    <select id="sportId"></select>
+                </div>
+                <button id="btnAddAthlete" class="btn-primary">Register Athlete</button>
+            </div>
+        </section>
+
+        <section id="form-medalie">
+            <h2>2. Award Medal</h2>
+            <div class="horizontal-form">
+                <div class="input-group">
+                    <label for="athleteIdInput">Athlete ID:</label>
+                    <input type="number" id="athleteIdInput" placeholder="Enter ID">
+                </div>
+                <div class="input-group">
+                    <label for="medalType">Medal Type:</label>
+                    <select id="medalType">
+                        <option value="Gold">Gold</option>
+                        <option value="Silver">Silver</option>
+                        <option value="Bronze">Bronze</option>
+                    </select>
+                </div>
+                <button id="btnAwardMedal" class="btn-medal">Award Medal</button>
+            </div>
+        </section>
+
+        <section id="lista-atleti">
+            <h2>Active Athletes</h2>
+            <table id="athletesTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Country</th>
+                        <th>Sport</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+
+        <section id="lista-medalii">
+            <h2>Live Medal Standings</h2>
+            <table id="medalsTable">
+                <thead>
+                    <tr>
+                        <th>Medal Type</th>
+                        <th>Athlete Name</th>
+                        <th>Sport</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </section>
+    </main>
+
+<script>
+    const API_BASE = 'http://localhost:3000/api';
+
+    $(document).ready(function() {
+        // --- LOGICĂ SPLASH SCREEN (DOAR LA PRIMA DESCHIDERE) ---
+        if (!sessionStorage.getItem('splashShown')) {
+            setTimeout(function() {
+                $('#splash-screen').css('opacity', '0');
+                setTimeout(function() {
+                    $('#splash-screen').hide();
+                    sessionStorage.setItem('splashShown', 'true');
+                }, 1000); 
+            }, 3000);
+        } else {
+            $('#splash-screen').hide();
+        }
+
+        loadData();
+
+        // register Athlete
+        $('#btnAddAthlete').click(function() {
+            const data = {
+                first_name: $('#fName').val(),
+                last_name: $('#lName').val(),
+                country_id: parseInt($('#countryId').val()),
+                sport_id: parseInt($('#sportId').val())
+            };
+
+            if (!data.first_name || !data.last_name) return alert("Please enter the name!");
+
+            //trimite date pt serverul json 
+            $.ajax({
+                url: `${API_BASE}/athletes`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function() { 
+                    $('#fName, #lName').val('');
+                    loadData(); // Update fără refresh
+                }
+            });
+        });
+
+        // Award Medal
+        $('#btnAwardMedal').click(function() {
+            const data = {
+                athlete_id: $('#athleteIdInput').val(),
+                medal_type: $('#medalType').val(),
+                event_id: 1
+            };
+            if (!data.athlete_id) return alert("Please enter the Athlete ID!");
+
+            $.ajax({
+                url: `${API_BASE}/medals`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function() { 
+                    $('#athleteIdInput').val('');
+                    loadData(); // Update fără refresh
+                }
+            });
+        });
+
+        // Buton Cancel Edit
+        $('#btnCancelEdit').click(function() {
+            $('#edit-section').fadeOut(300, function() {
+                $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeIn();
+            });
+        });
+
+        // Buton Save Edit
+        $('#btnSaveEdit').click(function() {
+            const id = $('#edit-athlete-id').val();
+            const data = {
+                first_name: $('#edit-fName').val(),
+                last_name: $('#edit-lName').val()
+            };
+
+            $.ajax({
+                url: `${API_BASE}/athletes/${id}`,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function() {
+                    $('#edit-section').fadeOut(300, function() {
+                        loadData();
+                        $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeIn();
+                    });
+                }
+            });
+        });
+    });
+
+    function loadData() {
+        $.get(`${API_BASE}/countries`, function(countries) {
+            let options = countries.map(c => `<option value="${c.country_id}">${c.name}</option>`);
+            $('#countryId').html(options.join(''));
+        });
+
+        $.get(`${API_BASE}/sports`, function(sports) {
+            let options = sports.map(s => `<option value="${s.sport_id}">${s.name}</option>`);
+            $('#sportId').html(options.join(''));
+        });
+
+        $.get(`${API_BASE}/athletes`, function(data) {
+            const rows = data.map(a => `
+                <tr>
+                    <td><strong>${a.athlete_id}</strong></td>
+                    <td>${a.first_name}</td>
+                    <td>${a.last_name}</td>
+                    <td>${a.country}</td>
+                    <td>${a.sport}</td>
+                    <td>
+                        <button class="edit-btn" onclick="editAthlete(${a.athlete_id}, '${a.first_name}', '${a.last_name}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteAthlete(${a.athlete_id})">Delete</button>
+                    </td>
+                </tr>
+            `);
+            $('#athletesTable tbody').html(rows.join(''));
+        });
+
+        $.get(`${API_BASE}/medals`, function(data) {
+            const rows = data.map(m => `
+                <tr>
+                    <td><span class="medal-${m.medal_type.toLowerCase()}">${m.medal_type}</span></td>
+                    <td>${m.first_name} ${m.last_name}</td>
+                    <td>${m.sport}</td>
+                </tr>
+            `);
+            $('#medalsTable tbody').html(rows.join(''));
+        });
+    }
+
+    function deleteAthlete(id) {
+        if (confirm("Are you sure you want to delete this athlete?")) {
+            $.ajax({
+                url: `${API_BASE}/athletes/${id}`,
+                type: 'DELETE',
+                success: function() { loadData(); }
+            });
+        }
+    }
+
+    function editAthlete(id, firstName, lastName) {
+        // Ascundem restul și afișăm doar zona de editare
+        $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeOut(300, function() {
+            $('#edit-athlete-id').val(id);
+            $('#edit-fName').val(firstName);
+            $('#edit-lName').val(lastName);
+            $('#edit-section').fadeIn();
+        });
+    }
+</script>
+</body>
+</html>
