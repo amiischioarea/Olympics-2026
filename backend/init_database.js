@@ -4,7 +4,6 @@ const db = new sqlite3.Database('./olympics.db'); //conexiunea de pe hard disk
 
 //pt executia comenzilor
 db.serialize(() => {
-    // 1. CREARE TABELE
     db.run(`CREATE TABLE IF NOT EXISTS Countries (
         country_id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -39,7 +38,7 @@ db.serialize(() => {
 
     console.log("--- STRUCTURE CREATED ---");
 
-    // 2. POPULARE CU DATE (MILANO CORTINA 2026)
+    //inseram tari
     db.run(`INSERT OR IGNORE INTO Countries (name, iso_code) VALUES 
         ('Norway', 'NOR'), 
         ('Romania', 'ROU'), 
@@ -48,12 +47,14 @@ db.serialize(() => {
         ('Austria', 'AUT'),
         ('Brasil', 'BRA')`);
 
+    //inseram sporturi
     db.run(`INSERT OR IGNORE INTO Sports (name, category) VALUES 
         ('Bobsleigh', 'Ice'), 
         ('Alpine Skiing', 'Snow'),
         ('Biathlon', 'Snow'),
         ('Luge', 'Ice')`);
 
+    //inseram sportivi
     db.run(`INSERT OR IGNORE INTO Athletes (first_name, last_name, country_id, sport_id) VALUES 
         ('Mihai', 'Tentea', 2, 1), 
         ('Valentin', 'Cretu', 2, 4),
@@ -65,7 +66,7 @@ db.serialize(() => {
         ('Dimitri', 'Shamaev', 2, 3),
         ('Lisa', 'Vittozzi', 3, 3)`);
 
-        //Inseram medalii
+    //inseram medalii
     db.run(`INSERT OR IGNORE INTO Medals (medal_type, athlete_id, event_id) VALUES 
         ('Silver', 5, 1), -- Manuel Feller
         ('Gold', 6, 1),   -- Mikaela Shiffrin

@@ -10,14 +10,14 @@ app.use(express.json());
 
 const db = new sqlite3.Database('./olympics.db');
 
-// --- GET ROUTES ---
+// --- get routes ---
 app.get('/api/athletes', (req, res) => {
     const sql = `
         SELECT a.athlete_id, a.first_name, a.last_name, c.name AS country, s.name AS sport 
         FROM Athletes a
         JOIN Countries c ON a.country_id = c.country_id
         JOIN Sports s ON a.sport_id = s.sport_id
-        ORDER BY a.athlete_id DESC`; // Adăugat ORDER BY pentru a vedea ultimii adăugați sus
+        ORDER BY a.athlete_id DESC`; 
     
     db.all(sql, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -52,7 +52,7 @@ app.get('/api/sports', (req, res) => {
     });
 });
 
-// --- POST ROUTES ---
+// --- post routes ---
 app.post('/api/athletes', (req, res) => {
     const { first_name, last_name, country_id, sport_id } = req.body;
     const sql = `INSERT INTO Athletes (first_name, last_name, country_id, sport_id) VALUES (?, ?, ?, ?)`;
@@ -71,7 +71,7 @@ app.post('/api/medals', (req, res) => {
     });
 });
 
-// --- UPDATE ROUTE ---
+// --- update routes ---
 app.put('/api/athletes/:id', (req, res) => {
     const { first_name, last_name } = req.body;
     const sql = `UPDATE Athletes SET first_name = ?, last_name = ? WHERE athlete_id = ?`;
@@ -85,7 +85,7 @@ app.put('/api/athletes/:id', (req, res) => {
     });
 });
 
-// --- DELETE ROUTE ---
+// --- delete routes ---
 app.delete('/api/athletes/:id', (req, res) => {
     const sql = `DELETE FROM Athletes WHERE athlete_id = ?`;
     db.run(sql, req.params.id, function(err) {

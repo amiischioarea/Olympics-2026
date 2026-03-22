@@ -114,7 +114,7 @@
     const API_BASE = 'http://localhost:3000/api';
 
     $(document).ready(function() {
-        // --- LOGICĂ SPLASH SCREEN (DOAR LA PRIMA DESCHIDERE) ---
+        // --- logica splash screen prima pagina ---
         if (!sessionStorage.getItem('splashShown')) {
             setTimeout(function() {
                 $('#splash-screen').css('opacity', '0');
@@ -129,7 +129,7 @@
 
         loadData();
 
-        // register Athlete
+        // inregistrare atleti
         $('#btnAddAthlete').click(function() {
             const data = {
                 first_name: $('#fName').val(),
@@ -148,12 +148,12 @@
                 data: JSON.stringify(data),
                 success: function() { 
                     $('#fName, #lName').val('');
-                    loadData(); // Update fără refresh
+                    loadData(); // update fără refresh
                 }
             });
         });
 
-        // Award Medal
+        // award medal
         $('#btnAwardMedal').click(function() {
             const data = {
                 athlete_id: $('#athleteIdInput').val(),
@@ -169,19 +169,19 @@
                 data: JSON.stringify(data),
                 success: function() { 
                     $('#athleteIdInput').val('');
-                    loadData(); // Update fără refresh
+                    loadData(); // update fără refresh
                 }
             });
         });
 
-        // Buton Cancel Edit
+        // buton cancel edit
         $('#btnCancelEdit').click(function() {
             $('#edit-section').fadeOut(300, function() {
                 $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeIn();
             });
         });
 
-        // Buton Save Edit
+        // buton save edit
         $('#btnSaveEdit').click(function() {
             const id = $('#edit-athlete-id').val();
             const data = {
@@ -255,7 +255,6 @@
     }
 
     function editAthlete(id, firstName, lastName) {
-        // Ascundem restul și afișăm doar zona de editare
         $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeOut(300, function() {
             $('#edit-athlete-id').val(id);
             $('#edit-fName').val(firstName);
