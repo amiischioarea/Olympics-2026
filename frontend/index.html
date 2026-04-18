@@ -13,9 +13,11 @@
             <div class="loader"></div>
         </div>
     </div>
+
     <header>
         <h1>Milano Cortina 2026 - Athlete Management</h1>
     </header>
+
     <main>
         <section id="edit-section" style="display: none; background-color: #fff9eb; border: 2px solid #d69e2e;">
             <h2> Editing Athlete Profile</h2>
@@ -80,6 +82,15 @@
 
         <section id="lista-atleti">
             <h2>Active Athletes</h2>
+            
+            <div class="horizontal-form" style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+                <div class="input-group">
+                    <input type="text" id="searchInput" placeholder="Search by name or surname...">
+                </div>
+                <button id="btnSearch" class="btn-primary" style="background-color: #007bff;">Search</button>
+                <button id="btnResetSearch" class="edit-btn">View All</button>
+            </div>
+
             <table id="athletesTable">
                 <thead>
                     <tr>
@@ -114,7 +125,7 @@
     const API_BASE = 'http://localhost:3000/api';
 
     $(document).ready(function() {
-        // --- logica splash screen prima pagina ---
+        // --- splash screen logic ---
         if (!sessionStorage.getItem('splashShown')) {
             setTimeout(function() {
                 $('#splash-screen').css('opacity', '0');
@@ -138,9 +149,6 @@
                 sport_id: parseInt($('#sportId').val())
             };
 
-            if (!data.first_name || !data.last_name) return alert("Please enter the name!");
-
-            //trimite date pt serverul json 
             $.ajax({
                 url: `${API_BASE}/athletes`,
                 type: 'POST',
@@ -148,20 +156,39 @@
                 data: JSON.stringify(data),
                 success: function() { 
                     $('#fName, #lName').val('');
-                    loadData(); // update fără refresh
+                    loadData();
+                },
+                error: function(err) {
+                    alert("Eroare: " + (err.responseJSON.message || "Date invalide"));
                 }
             });
+        });
+
+        // search logic
+        $('#btnSearch').click(function() {
+            const query = $('#searchInput').val();
+            if (!query) return loadData();
+
+            $.get(`${API_BASE}/athletes/search?name=${query}`, function(data) {
+                renderAthletesTable(data);
+            }).fail(function(err) {
+                alert(err.responseJSON.message || "Nu s-au gasit sportivi.");
+            });
+        });
+
+        $('#btnResetSearch').click(function() {
+            $('#searchInput').val('');
+            loadData();
         });
 
         // award medal
         $('#btnAwardMedal').click(function() {
             const data = {
-                athlete_id: $('#athleteIdInput').val(),
+                athlete_id: parseInt($('#athleteIdInput').val()),
                 medal_type: $('#medalType').val(),
-                event_id: 1
+                event_id: 1 
             };
-            if (!data.athlete_id) return alert("Please enter the Athlete ID!");
-
+            
             $.ajax({
                 url: `${API_BASE}/medals`,
                 type: 'POST',
@@ -169,19 +196,22 @@
                 data: JSON.stringify(data),
                 success: function() { 
                     $('#athleteIdInput').val('');
-                    loadData(); // update fără refresh
+                    loadData();
+                },
+                error: function(err) {
+                    alert("Eroare: " + (err.responseJSON.message || "Verifica ID-ul atleatului"));
                 }
             });
         });
 
-        // buton cancel edit
+        // cancel edit
         $('#btnCancelEdit').click(function() {
             $('#edit-section').fadeOut(300, function() {
                 $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeIn();
             });
         });
 
-        // buton save edit
+        // save edit
         $('#btnSaveEdit').click(function() {
             const id = $('#edit-athlete-id').val();
             const data = {
@@ -199,10 +229,30 @@
                         loadData();
                         $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeIn();
                     });
+                },
+                error: function(err) {
+                    alert("Eroare la actualizare: " + err.responseJSON.message);
                 }
             });
         });
     });
+
+    function renderAthletesTable(data) {
+        const rows = data.map(a => `
+            <tr>
+                <td><strong>${a.athlete_id}</strong></td>
+                <td>${a.first_name}</td>
+                <td>${a.last_name}</td>
+                <td>${a.country}</td>
+                <td>${a.sport}</td>
+                <td>
+                    <button class="edit-btn" onclick="editAthlete(${a.athlete_id}, '${a.first_name}', '${a.last_name}')">Edit</button>
+                    <button class="delete-btn" onclick="deleteAthlete(${a.athlete_id})">Delete</button>
+                </td>
+            </tr>
+        `);
+        $('#athletesTable tbody').html(rows.join(''));
+    }
 
     function loadData() {
         $.get(`${API_BASE}/countries`, function(countries) {
@@ -216,20 +266,7 @@
         });
 
         $.get(`${API_BASE}/athletes`, function(data) {
-            const rows = data.map(a => `
-                <tr>
-                    <td><strong>${a.athlete_id}</strong></td>
-                    <td>${a.first_name}</td>
-                    <td>${a.last_name}</td>
-                    <td>${a.country}</td>
-                    <td>${a.sport}</td>
-                    <td>
-                        <button class="edit-btn" onclick="editAthlete(${a.athlete_id}, '${a.first_name}', '${a.last_name}')">Edit</button>
-                        <button class="delete-btn" onclick="deleteAthlete(${a.athlete_id})">Delete</button>
-                    </td>
-                </tr>
-            `);
-            $('#athletesTable tbody').html(rows.join(''));
+            renderAthletesTable(data);
         });
 
         $.get(`${API_BASE}/medals`, function(data) {
