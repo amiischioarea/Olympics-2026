@@ -8,7 +8,9 @@ The repository is organized into two main components:
   - backend: the core of the application
 
 # Key Functionalities
-The application allows users to interact with the Olympic database through the following features:
-  - add new athletes
-  - result tracking
-  - data Persistence
+- **Athlete Management**: CRUD operations for athlete profiles
+- **Medal Awarding System**: dynamic medal assignment (Gold, Silver, Bronze) 
+- **Robust Validation**: backend schema validation using the `Joi` library 
+- **Dynamic Interface**: real-time search and sport-based filtering 
+- **Optimized Architecture**: data processing handled efficiently via SQL 
+- **User Experience**: custom splash screen and local storage persistence for search queries.
