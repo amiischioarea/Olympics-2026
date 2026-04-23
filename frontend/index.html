@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ro">
 <head>
     <meta charset="UTF-8"> 
     <title>Milano Cortina 2026 - Athlete Management</title>
@@ -19,7 +19,7 @@
     </header>
 
     <main>
-        <section id="edit-section" style="display: none; background-color: #fff9eb; border: 2px solid #d69e2e;">
+        <section id="edit-section" style="display: none; background-color: #fff9eb; border: 2px solid #d69e2e; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
             <h2> Editing Athlete Profile</h2>
             <div class="horizontal-form">
                 <input type="hidden" id="edit-athlete-id">
@@ -31,7 +31,7 @@
                     <label>New Last Name:</label>
                     <input type="text" id="edit-lName">
                 </div>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button id="btnSaveEdit" class="btn-primary" style="background-color: #28a745;">Save Changes</button>
                     <button id="btnCancelEdit" class="edit-btn">Cancel</button>
                 </div>
@@ -83,22 +83,25 @@
         <section id="lista-atleti">
             <h2>Active Athletes</h2>
             
-            <div class="horizontal-form" style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+            <div class="horizontal-form" style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #ddd;">
                 <div class="input-group">
-                    <input type="text" id="searchInput" placeholder="Search by name or surname...">
+                    <label>Search:</label>
+                    <input type="text" id="searchInput" placeholder="Search by name...">
+                </div>
+                <div class="input-group">
+                    <label>Filter by Sport:</label>
+                    <select id="filterSport">
+                        <option value="all">All Sports</option>
+                    </select>
                 </div>
                 <button id="btnSearch" class="btn-primary" style="background-color: #007bff;">Search</button>
-                <button id="btnResetSearch" class="edit-btn">View All</button>
+                <button id="btnResetSearch" class="edit-btn">View All / Reset</button>
             </div>
 
             <table id="athletesTable">
-                <thead>
+                <thead style="cursor: pointer; background-color: #f2f2f2;">
                     <tr>
-                        <th>ID</th>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                        <th>Country</th>
-                        <th>Sport</th>
+                        <th onclick="sortTable(3)">Country ↕</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -125,7 +128,7 @@
     const API_BASE = 'http://localhost:3000/api';
 
     $(document).ready(function() {
-        // --- splash screen logic ---
+        // --- A. Logica Splash Screen ---
         if (!sessionStorage.getItem('splashShown')) {
             setTimeout(function() {
                 $('#splash-screen').css('opacity', '0');
@@ -133,14 +136,27 @@
                     $('#splash-screen').hide();
                     sessionStorage.setItem('splashShown', 'true');
                 }, 1000); 
-            }, 3000);
+            }, 2000); // 2 secunde e suficient pentru demo
         } else {
             $('#splash-screen').hide();
         }
 
+        // --- B. Încărcare Inițială Date ---
         loadData();
+        populateSportFilter();
 
-        // inregistrare atleti
+        // --- C. Restaurare Căutare anterioară (localStorage) ---
+        const savedSearch = localStorage.getItem('lastSearch');
+        if (savedSearch) {
+            $('#searchInput').val(savedSearch);
+            $.get(`${API_BASE}/athletes/search?name=${savedSearch}`, function(data) {
+                renderAthletesTable(data);
+            });
+        }
+
+        // --- D. Event Listeners ---
+
+        // Înregistrare Atleți
         $('#btnAddAthlete').click(function() {
             const data = {
                 first_name: $('#fName').val(),
@@ -148,7 +164,6 @@
                 country_id: parseInt($('#countryId').val()),
                 sport_id: parseInt($('#sportId').val())
             };
-
             $.ajax({
                 url: `${API_BASE}/athletes`,
                 type: 'POST',
@@ -158,37 +173,44 @@
                     $('#fName, #lName').val('');
                     loadData();
                 },
-                error: function(err) {
-                    alert("Eroare: " + (err.responseJSON.message || "Date invalide"));
-                }
+                error: function(err) { alert("Eroare la înregistrare!"); }
             });
         });
 
-        // search logic
+        // Buton Căutare
         $('#btnSearch').click(function() {
             const query = $('#searchInput').val();
+            localStorage.setItem('lastSearch', query);
             if (!query) return loadData();
-
             $.get(`${API_BASE}/athletes/search?name=${query}`, function(data) {
                 renderAthletesTable(data);
-            }).fail(function(err) {
-                alert(err.responseJSON.message || "Nu s-au gasit sportivi.");
             });
         });
 
+        // Buton Reset
         $('#btnResetSearch').click(function() {
             $('#searchInput').val('');
+            $('#filterSport').val('all');
+            localStorage.removeItem('lastSearch');
             loadData();
         });
 
-        // award medal
+        // Filtrare Automată la schimbarea sportului
+        $('#filterSport').change(function() {
+            const selectedSport = $(this).val().toLowerCase();
+            $("#athletesTable tbody tr").filter(function() {
+                const rowSport = $(this).find("td:eq(4)").text().toLowerCase();
+                $(this).toggle(selectedSport === "all" || rowSport === selectedSport);
+            });
+        });
+
+        // Award Medal
         $('#btnAwardMedal').click(function() {
             const data = {
                 athlete_id: parseInt($('#athleteIdInput').val()),
                 medal_type: $('#medalType').val(),
                 event_id: 1 
             };
-            
             $.ajax({
                 url: `${API_BASE}/medals`,
                 type: 'POST',
@@ -198,27 +220,20 @@
                     $('#athleteIdInput').val('');
                     loadData();
                 },
-                error: function(err) {
-                    alert("Eroare: " + (err.responseJSON.message || "Verifica ID-ul atleatului"));
-                }
+                error: function() { alert("ID Sportiv invalid!"); }
             });
         });
 
-        // cancel edit
+        // Logica Editare (Salvare/Cancel)
         $('#btnCancelEdit').click(function() {
             $('#edit-section').fadeOut(300, function() {
                 $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeIn();
             });
         });
 
-        // save edit
         $('#btnSaveEdit').click(function() {
             const id = $('#edit-athlete-id').val();
-            const data = {
-                first_name: $('#edit-fName').val(),
-                last_name: $('#edit-lName').val()
-            };
-
+            const data = { first_name: $('#edit-fName').val(), last_name: $('#edit-lName').val() };
             $.ajax({
                 url: `${API_BASE}/athletes/${id}`,
                 type: 'PUT',
@@ -229,46 +244,23 @@
                         loadData();
                         $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeIn();
                     });
-                },
-                error: function(err) {
-                    alert("Eroare la actualizare: " + err.responseJSON.message);
                 }
             });
         });
     });
 
-    function renderAthletesTable(data) {
-        const rows = data.map(a => `
-            <tr>
-                <td><strong>${a.athlete_id}</strong></td>
-                <td>${a.first_name}</td>
-                <td>${a.last_name}</td>
-                <td>${a.country}</td>
-                <td>${a.sport}</td>
-                <td>
-                    <button class="edit-btn" onclick="editAthlete(${a.athlete_id}, '${a.first_name}', '${a.last_name}')">Edit</button>
-                    <button class="delete-btn" onclick="deleteAthlete(${a.athlete_id})">Delete</button>
-                </td>
-            </tr>
-        `);
-        $('#athletesTable tbody').html(rows.join(''));
-    }
+    // --- E. Funcții Helper ---
 
     function loadData() {
+        // Populează dropdown-urile de form
         $.get(`${API_BASE}/countries`, function(countries) {
-            let options = countries.map(c => `<option value="${c.country_id}">${c.name}</option>`);
-            $('#countryId').html(options.join(''));
+            $('#countryId').html(countries.map(c => `<option value="${c.country_id}">${c.name}</option>`).join(''));
         });
-
         $.get(`${API_BASE}/sports`, function(sports) {
-            let options = sports.map(s => `<option value="${s.sport_id}">${s.name}</option>`);
-            $('#sportId').html(options.join(''));
+            $('#sportId').html(sports.map(s => `<option value="${s.sport_id}">${s.name}</option>`).join(''));
         });
-
-        $.get(`${API_BASE}/athletes`, function(data) {
-            renderAthletesTable(data);
-        });
-
+        // Încarcă tabelele
+        $.get(`${API_BASE}/athletes`, function(data) { renderAthletesTable(data); });
         $.get(`${API_BASE}/medals`, function(data) {
             const rows = data.map(m => `
                 <tr>
@@ -281,13 +273,36 @@
         });
     }
 
+    function populateSportFilter() {
+        $.get(`${API_BASE}/sports`, function(sports) {
+            let options = sports.map(s => `<option value="${s.name}">${s.name}</option>`);
+            $('#filterSport').append(options.join(''));
+        });
+    }
+
+    function renderAthletesTable(data) {
+    // Adăugăm această linie de sortare înainte de .map()
+    data.sort((a, b) => a.country.localeCompare(b.country));
+
+    const rows = data.map(a => `
+        <tr>
+            <td><strong>${a.athlete_id}</strong></td>
+            <td>${a.first_name}</td>
+            <td>${a.last_name}</td>
+            <td>${a.country}</td>
+            <td>${a.sport}</td>
+            <td>
+                <button class="edit-btn" onclick="editAthlete(${a.athlete_id}, '${a.first_name}', '${a.last_name}')">Edit</button>
+                <button class="delete-btn" onclick="deleteAthlete(${a.athlete_id})">Delete</button>
+            </td>
+        </tr>
+    `);
+    $('#athletesTable tbody').html(rows.join(''));
+}
+
     function deleteAthlete(id) {
-        if (confirm("Are you sure you want to delete this athlete?")) {
-            $.ajax({
-                url: `${API_BASE}/athletes/${id}`,
-                type: 'DELETE',
-                success: function() { loadData(); }
-            });
+        if (confirm("Sigur ștergi sportivul?")) {
+            $.ajax({ url: `${API_BASE}/athletes/${id}`, type: 'DELETE', success: function() { loadData(); } });
         }
     }
 
@@ -298,6 +313,38 @@
             $('#edit-lName').val(lastName);
             $('#edit-section').fadeIn();
         });
+    }
+
+    // Funcția de Sortare (trebuie să fie globală pentru onclick)
+    function sortTable(n) {
+        let table = document.getElementById("athletesTable");
+        let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        switching = true;
+        dir = "asc";
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                let valX = isNaN(x.innerText) ? x.innerText.toLowerCase() : parseFloat(x.innerText);
+                let valY = isNaN(y.innerText) ? y.innerText.toLowerCase() : parseFloat(y.innerText);
+                if (dir == "asc") {
+                    if (valX > valY) { shouldSwitch = true; break; }
+                } else if (dir == "desc") {
+                    if (valX < valY) { shouldSwitch = true; break; }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else if (switchcount == 0 && dir == "asc") {
+                dir = "desc";
+                switching = true;
+            }
+        }
     }
 </script>
 </body>
