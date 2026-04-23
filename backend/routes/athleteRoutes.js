@@ -36,18 +36,17 @@ module.exports = (db) => {
     });
 
     router.get('/', (req, res) => {
-        const sql = `
-            SELECT a.athlete_id, a.first_name, a.last_name, c.name AS country, s.name AS sport 
-            FROM Athletes a
-            JOIN Countries c ON a.country_id = c.country_id
-            JOIN Sports s ON a.sport_id = s.sport_id
-            ORDER BY a.athlete_id DESC`; 
-        
-        db.all(sql, [], (err, rows) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json(rows);
-        });
+    const sql = `SELECT * FROM Athletes ORDER BY last_name ASC`; 
+    
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error("Eroare SQL:", err.message);
+            return res.status(500).json({ error: err.message });
+        }
+        console.log("Date trimise către frontend:", rows.length, "rânduri");
+        res.json(rows);
     });
+});
 
     router.post('/', (req, res) => {
         const { error, value } = athleteSchema.validate(req.body);

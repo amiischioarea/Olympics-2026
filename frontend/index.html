@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html>
 <head>
     <meta charset="UTF-8"> 
     <title>Milano Cortina 2026 - Athlete Management</title>
@@ -43,11 +43,11 @@
             <div class="horizontal-form">
                 <div class="input-group">
                     <label for="fName">First Name:</label>
-                    <input type="text" id="fName" placeholder="e.g. John">
+                    <input type="text" id="fName" placeholder="e.g. Ion">
                 </div>
                 <div class="input-group">
                     <label for="lName">Last Name:</label>
-                    <input type="text" id="lName" placeholder="e.g. Doe">
+                    <input type="text" id="lName" placeholder="e.g. Barbu">
                 </div>
                 <div class="input-group">
                     <label for="countryId">Country:</label>
@@ -128,7 +128,7 @@
     const API_BASE = 'http://localhost:3000/api';
 
     $(document).ready(function() {
-        // --- A. Logica Splash Screen ---
+        // ---  splash screen ---
         if (!sessionStorage.getItem('splashShown')) {
             setTimeout(function() {
                 $('#splash-screen').css('opacity', '0');
@@ -136,16 +136,16 @@
                     $('#splash-screen').hide();
                     sessionStorage.setItem('splashShown', 'true');
                 }, 1000); 
-            }, 2000); // 2 secunde e suficient pentru demo
+            }, 2000); // 2 sec pt demo
         } else {
             $('#splash-screen').hide();
         }
 
-        // --- B. Încărcare Inițială Date ---
+        // --- incarcare initiala ---
         loadData();
         populateSportFilter();
 
-        // --- C. Restaurare Căutare anterioară (localStorage) ---
+        // --- cautare anterioara ---
         const savedSearch = localStorage.getItem('lastSearch');
         if (savedSearch) {
             $('#searchInput').val(savedSearch);
@@ -154,9 +154,9 @@
             });
         }
 
-        // --- D. Event Listeners ---
+        // --- event listeners ---
 
-        // Înregistrare Atleți
+        // inregistrare atleti
         $('#btnAddAthlete').click(function() {
             const data = {
                 first_name: $('#fName').val(),
@@ -173,11 +173,11 @@
                     $('#fName, #lName').val('');
                     loadData();
                 },
-                error: function(err) { alert("Eroare la înregistrare!"); }
+                error: function(err) { alert("eroare inregistrare"); }
             });
         });
 
-        // Buton Căutare
+        // buton cautare
         $('#btnSearch').click(function() {
             const query = $('#searchInput').val();
             localStorage.setItem('lastSearch', query);
@@ -187,7 +187,7 @@
             });
         });
 
-        // Buton Reset
+        // buton reset
         $('#btnResetSearch').click(function() {
             $('#searchInput').val('');
             $('#filterSport').val('all');
@@ -195,7 +195,7 @@
             loadData();
         });
 
-        // Filtrare Automată la schimbarea sportului
+        // filtrare automata la schimbarea sportului
         $('#filterSport').change(function() {
             const selectedSport = $(this).val().toLowerCase();
             $("#athletesTable tbody tr").filter(function() {
@@ -204,7 +204,7 @@
             });
         });
 
-        // Award Medal
+        // award medal
         $('#btnAwardMedal').click(function() {
             const data = {
                 athlete_id: parseInt($('#athleteIdInput').val()),
@@ -224,7 +224,7 @@
             });
         });
 
-        // Logica Editare (Salvare/Cancel)
+        // logica editare 
         $('#btnCancelEdit').click(function() {
             $('#edit-section').fadeOut(300, function() {
                 $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeIn();
@@ -249,17 +249,16 @@
         });
     });
 
-    // --- E. Funcții Helper ---
-
+    // functii helper
     function loadData() {
-        // Populează dropdown-urile de form
+        // populeaza dropdown urile
         $.get(`${API_BASE}/countries`, function(countries) {
             $('#countryId').html(countries.map(c => `<option value="${c.country_id}">${c.name}</option>`).join(''));
         });
         $.get(`${API_BASE}/sports`, function(sports) {
             $('#sportId').html(sports.map(s => `<option value="${s.sport_id}">${s.name}</option>`).join(''));
         });
-        // Încarcă tabelele
+        // incarca tabelele
         $.get(`${API_BASE}/athletes`, function(data) { renderAthletesTable(data); });
         $.get(`${API_BASE}/medals`, function(data) {
             const rows = data.map(m => `
@@ -281,10 +280,7 @@
     }
 
     function renderAthletesTable(data) {
-    // Adăugăm această linie de sortare înainte de .map()
-    data.sort((a, b) => a.country.localeCompare(b.country));
-
-    const rows = data.map(a => `
+     const rows = data.map(a => `
         <tr>
             <td><strong>${a.athlete_id}</strong></td>
             <td>${a.first_name}</td>
@@ -313,38 +309,6 @@
             $('#edit-lName').val(lastName);
             $('#edit-section').fadeIn();
         });
-    }
-
-    // Funcția de Sortare (trebuie să fie globală pentru onclick)
-    function sortTable(n) {
-        let table = document.getElementById("athletesTable");
-        let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-        switching = true;
-        dir = "asc";
-        while (switching) {
-            switching = false;
-            rows = table.rows;
-            for (i = 1; i < (rows.length - 1); i++) {
-                shouldSwitch = false;
-                x = rows[i].getElementsByTagName("TD")[n];
-                y = rows[i + 1].getElementsByTagName("TD")[n];
-                let valX = isNaN(x.innerText) ? x.innerText.toLowerCase() : parseFloat(x.innerText);
-                let valY = isNaN(y.innerText) ? y.innerText.toLowerCase() : parseFloat(y.innerText);
-                if (dir == "asc") {
-                    if (valX > valY) { shouldSwitch = true; break; }
-                } else if (dir == "desc") {
-                    if (valX < valY) { shouldSwitch = true; break; }
-                }
-            }
-            if (shouldSwitch) {
-                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                switching = true;
-                switchcount++;
-            } else if (switchcount == 0 && dir == "asc") {
-                dir = "desc";
-                switching = true;
-            }
-        }
     }
 </script>
 </body>
