@@ -15,7 +15,14 @@
     </div>
 
     <header>
-        <h1>Milano Cortina 2026 - Athlete Management</h1>
+    <h1>Milano Cortina 2026 - Athlete Management</h1>
+    <div style="position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 10px;">
+        <label for="theme-select" style="font-size: 0.8rem; font-weight: bold;">theme:</label>
+        <select id="theme-select" style="min-width: 120px; padding: 5px;">
+            <option value="light">light mode</option>
+            <option value="dark">dark mode</option>
+        </select>
+    </div>
     </header>
 
     <main>
@@ -118,6 +125,24 @@
             </table>
         </section>
     </main>
+
+    <section id="national-rankings">
+    <h2>National Medal Table</h2>
+    <table id="rankingsTable">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Country</th>
+                <th class="medal-gold">Gold</th>
+                <th class="medal-silver">Silver</th>
+                <th class="medal-bronze">Bronze</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</section>
 
 <script src="script.js"></script>
 </body>

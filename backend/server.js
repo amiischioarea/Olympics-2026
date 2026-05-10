@@ -22,10 +22,12 @@ const db = new sqlite3.Database('./olympics.db', (err) => {
 // se importa rutele
 const athleteRoutes = require('./routes/athleteRoutes')(db);
 const medalRoutes = require('./routes/medalRoutes')(db);
+const medalsRouter = require('./routes/medals_coutry');
 
 // definirea rutelor
 app.use('/api/athletes', athleteRoutes);
 app.use('/api/medals', medalRoutes);
+app.use('/api', medalsRouter);
 
 app.get('/api/countries', (req, res) => {
     db.all("SELECT * FROM Countries ORDER BY name ASC", [], (err, rows) => {
