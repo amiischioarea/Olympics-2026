@@ -19,15 +19,30 @@ const db = new sqlite3.Database('./olympics.db', (err) => {
     }
 });
 
+db.serialize(() => {
+    db.get("SELECT COUNT(*) as nr FROM Athletes", (err, row) => {
+        console.log(`[DEBUG] Sportivi: ${row ? row.nr : 0}`);
+    });
+    db.get("SELECT COUNT(*) as nr FROM Countries", (err, row) => {
+        console.log(`[DEBUG] Tari: ${row ? row.nr : 0}`);
+    });
+    db.get("SELECT COUNT(*) as nr FROM Sports", (err, row) => {
+        console.log(`[DEBUG] Sporturi: ${row ? row.nr : 0}`);
+    });
+});
+
 // se importa rutele
 const athleteRoutes = require('./routes/athleteRoutes')(db);
 const medalRoutes = require('./routes/medalRoutes')(db);
 const medalsRouter = require('./routes/medals_coutry');
+const newsRoutes = require('./routes/news');
+const news = require('./routes/news');
 
 // definirea rutelor
 app.use('/api/athletes', athleteRoutes);
 app.use('/api/medals', medalRoutes);
 app.use('/api', medalsRouter);
+app.use('/api/news', newsRoutes());
 
 app.get('/api/countries', (req, res) => {
     db.all("SELECT * FROM Countries ORDER BY name ASC", [], (err, rows) => {

@@ -7,6 +7,9 @@
     --section-border: #e1e8ed;
     --input-bg: #ffffff;
     --table-header: #f7fafc;
+    --accent-blue: #0082d1;
+    --fis-blue: #002f6c;
+    --link-color: #003580;
 }
 
 /* culorile pt dark theme */
@@ -18,6 +21,9 @@ body.dark-theme {
     --section-border: #4a5568;
     --input-bg: #2d3748; 
     --table-header: #4a5568;
+    --accent-blue: #63b3ed;
+    --fis-blue: #90cdf4;
+    --link-color: #90cdf4;
 }
 
 #theme-select {
@@ -34,7 +40,7 @@ body.dark-theme #theme-select {
     border-color: #718096;
 }
 
-/* stiluri */
+/* stiluri de baza */
 body {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     line-height: 1.6;
@@ -88,7 +94,7 @@ h2 {
     padding-bottom: 12px; margin-top: 0; font-size: 1.5rem;
 }
 
-body.dark-theme h2 { color: #63b3ed; }
+body.dark-theme h2 { color: var(--accent-blue); }
 
 /* formulare */
 .horizontal-form {
@@ -117,7 +123,7 @@ th { background-color: var(--table-header); color: var(--text-color); text-trans
 tr:hover { background-color: rgba(0, 130, 209, 0.05); }
 
 /* medalii */
-.medal-gold { color: #d4af37; font-weight: bold; text-shadow: 0px 0px 1px rgba(0,0,0,0.1); }
+.medal-gold { color: #d4af37; font-weight: bold; }
 .medal-silver { color: #8a8d91; font-weight: bold; }
 .medal-bronze { color: #cd7f32; font-weight: bold; }
 
@@ -127,11 +133,96 @@ button { transition: all 0.2s ease; cursor: pointer; font-weight: 600; }
 .btn-primary:hover { background-color: #00255a; transform: translateY(-1px); }
 .btn-medal { background-color: #d69e2e; color: white; padding: 10px 20px; border: none; border-radius: 6px; }
 .btn-medal:hover { background-color: #b78926; }
-.edit-btn { background-color: #edf2f7; color: #2d3748; border: 1px solid #cbd5e0; padding: 6px 12px; border-radius: 4px; margin-right: 8px; }
-.edit-btn:hover { background-color: #e2e8f0; border-color: #a0aec0; }
-.delete-btn { background-color: #fff5f5; color: #e53e3e; border: 1px solid #feb2b2; padding: 6px 12px; border-radius: 4px; }
-.delete-btn:hover { background-color: #fed7d7; }
 
-/* animatii */
+/* sectiune stiri */
+.news-slider-container {
+    width: 100%;
+    overflow: hidden;
+    background: var(--card-bg); 
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid var(--section-border);
+}
+
+.news-slider {
+    display: flex;
+    overflow-x: auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 20px;
+    padding: 10px 5px 25px 5px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Stil Scrollbar */
+.news-slider::-webkit-scrollbar { height: 10px; display: block;}
+.news-slider::-webkit-scrollbar-track { background: var(--bg-color); border-radius: 10px; }
+.news-slider::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 10px; }
+.news-slider::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+
+/* card stire */
+.article-card {
+    min-width: 300px; 
+    max-width: 300px;
+    flex: 0 0 auto;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid var(--section-border);
+}
+
+.article-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.article-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+}
+
+.article-meta {
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: #718096;
+    font-weight: 600;
+}
+
+.article-card h3 {
+    margin: 10px 0;
+    font-size: 1.1rem;
+    line-height: 1.4;
+    color: var(--header-bg);
+    font-weight: 700;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.article-card a {
+    color: var(--link-color);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.article-card a:hover {
+    text-decoration: underline;
+    color: var(--accent-blue);
+}
+
+body.dark-theme .article-card h3 {
+    color: #ffffff; 
+}
+
+/* Animatii */
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }

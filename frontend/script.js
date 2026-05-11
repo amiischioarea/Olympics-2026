@@ -1,7 +1,7 @@
 const API_BASE = 'http://localhost:3000/api';
 
 $(document).ready(function() {
-    //  spalsh screen 
+    // 1. SPLASH SCREEN
     if (!sessionStorage.getItem('splashShown')) {
         setTimeout(function() {
             $('#splash-screen').css('opacity', '0');
@@ -14,34 +14,29 @@ $(document).ready(function() {
         $('#splash-screen').hide();
     }
 
-//pt schimbarea temei
-const savedTheme = localStorage.getItem('theme') || 'light';
-
-// tema schimbata la aplicare
-if (savedTheme === 'dark') {
-    $('body').addClass('dark-theme');
-}
-$('#theme-select').val(savedTheme);
-
-//schimbarea selectiei
-$('#theme-select').change(function() {
-    const selectedTheme = $(this).val();
-    
-    if (selectedTheme === 'dark') {
+    // 2. THEME SELECTOR
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
         $('body').addClass('dark-theme');
-    } else {
-        $('body').removeClass('dark-theme');
     }
-    
-    // Salvăm în browser
-    localStorage.setItem('theme', selectedTheme);
-});
+    $('#theme-select').val(savedTheme);
 
-    // initializare date
+    $('#theme-select').change(function() {
+        const selectedTheme = $(this).val();
+        if (selectedTheme === 'dark') {
+            $('body').addClass('dark-theme');
+        } else {
+            $('body').removeClass('dark-theme');
+        }
+        localStorage.setItem('theme', selectedTheme);
+    });
+
+    // 3. INITIAL LOAD
     loadData();
     populateSportFilter();
+    initNewsDragScroll();
 
-    // verificam daca au date salvate anterior
+    // 4. SEARCH LOGIC
     const savedSearch = localStorage.getItem('lastSearch');
     if (savedSearch) {
         $('#searchInput').val(savedSearch);
@@ -50,7 +45,23 @@ $('#theme-select').change(function() {
         });
     }
 
-    // add sportiv
+    $('#btnSearch').click(function() {
+        const query = $('#searchInput').val();
+        localStorage.setItem('lastSearch', query);
+        if (!query) return loadData();
+        $.get(`${API_BASE}/athletes/search?name=${query}`, function(data) {
+            renderAthletesTable(data);
+        });
+    });
+
+    $('#btnResetSearch').click(function() {
+        $('#searchInput').val('');
+        $('#filterSport').val('all');
+        localStorage.removeItem('lastSearch');
+        loadData();
+    });
+
+    // 5. ATHLETE CRUD
     $('#btnAddAthlete').click(function() {
         const data = {
             first_name: $('#fName').val(),
@@ -58,7 +69,6 @@ $('#theme-select').change(function() {
             country_id: parseInt($('#countryId').val()),
             sport_id: parseInt($('#sportId').val())
         };
-
         if(!data.first_name || !data.last_name) return alert("Completează numele!");
 
         $.ajax({
@@ -70,38 +80,11 @@ $('#theme-select').change(function() {
                 $('#fName, #lName').val('');
                 loadData();
             },
-            error: function(err) { alert("Eroare la înregistrare: " + err.responseJSON.error); }
+            error: function(err) { alert("Eroare la înregistrare!"); }
         });
     });
 
-    // search sportiv
-    $('#btnSearch').click(function() {
-        const query = $('#searchInput').val();
-        localStorage.setItem('lastSearch', query);
-        if (!query) return loadData();
-        $.get(`${API_BASE}/athletes/search?name=${query}`, function(data) {
-            renderAthletesTable(data);
-        });
-    });
-
-    // reset
-    $('#btnResetSearch').click(function() {
-        $('#searchInput').val('');
-        $('#filterSport').val('all');
-        localStorage.removeItem('lastSearch');
-        loadData();
-    });
-
-    // filtrare
-    $('#filterSport').change(function() {
-        const selectedSport = $(this).val().toLowerCase();
-        $("#athletesTable tbody tr").filter(function() {
-            const rowSport = $(this).find("td:eq(4)").text().toLowerCase();
-            $(this).toggle(selectedSport === "all" || rowSport === selectedSport);
-        });
-    });
-
-    // acordare medalie
+    // 6. MEDALS
     $('#btnAwardMedal').click(function() {
         const data = {
             athlete_id: parseInt($('#athleteIdInput').val()),
@@ -117,11 +100,11 @@ $('#theme-select').change(function() {
                 $('#athleteIdInput').val('');
                 loadData();
             },
-            error: function() { alert("ID Sportiv invalid sau medalie deja existentă!"); }
+            error: function() { alert("ID Sportiv invalid sau medalie existentă!"); }
         });
     });
 
-    // logica editare - butoane edit / cancel
+    // 7. EDIT LOGIC
     $('#btnCancelEdit').click(function() {
         $('#edit-section').fadeOut(300, function() {
             $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeIn();
@@ -149,64 +132,52 @@ $('#theme-select').change(function() {
     });
 });
 
-function loadMedalRankings() {
-    $.get(`${API_BASE}/medals_country`, function(data) {
-        console.log("recived data:", data); //pt debug
-        
-        if (data.length === 0) {
-            $('#rankingsTable tbody').html('<tr><td colspan="6" style="text-align:center;">No medals awarded yet.</td></tr>');
-            return;
-        }
-
-        const rows = data.map((row, index) => `
-            <tr>
-                <td><strong>${index + 1}</strong></td>
-                <td>${row.country}</td>
-                <td>${row.gold}</td>
-                <td>${row.silver}</td>
-                <td>${row.bronze}</td>
-                <td><strong>${row.total}</strong></td>
-            </tr>
-        `);
-        $('#rankingsTable tbody').html(rows.join(''));
-    });
-}
+// --- FUNCTIONS ---
 
 function loadData() {
-    // populeaza dropdown urile
-    $.get(`${API_BASE}/countries`, function(countries) {
-        $('#countryId').html(countries.map(c => `<option value="${c.country_id}">${c.name}</option>`).join(''));
-    });
-    
-    $.get(`${API_BASE}/sports`, function(sports) {
-        $('#sportId').html(sports.map(s => `<option value="${s.sport_id}">${s.name}</option>`).join(''));
-    });
-
-    // incarca tabelele
-    $.get(`${API_BASE}/athletes`, function(data) { 
-        renderAthletesTable(data); 
-    });
-
-    $.get(`${API_BASE}/medals`, function(data) {
-        const rows = data.map(m => `
-            <tr>
-                <td><span class="medal-${m.medal_type.toLowerCase()}">${m.medal_type}</span></td>
-                <td>${m.first_name} ${m.last_name}</td>
-                <td>${m.sport}</td>
-            </tr>
-        `);
+    $.get(`${API_BASE}/countries`, (c) => $('#countryId').html(c.map(x => `<option value="${x.country_id}">${x.name}</option>`).join('')));
+    $.get(`${API_BASE}/sports`, (s) => $('#sportId').html(s.map(x => `<option value="${x.sport_id}">${x.name}</option>`).join('')));
+    $.get(`${API_BASE}/athletes`, (data) => renderAthletesTable(data));
+    $.get(`${API_BASE}/medals`, (data) => {
+        const rows = data.map(m => `<tr><td><span class="medal-${m.medal_type.toLowerCase()}">${m.medal_type}</span></td><td>${m.first_name} ${m.last_name}</td><td>${m.sport}</td></tr>`);
         $('#medalsTable tbody').html(rows.join(''));
     });
-
     loadMedalRankings();
+    loadLatestNews(); 
 }
 
-function populateSportFilter() {
-    $.get(`${API_BASE}/sports`, function(sports) {
-        // pastram prima optiune si eliminam restul
-        let options = sports.map(s => `<option value="${s.name}">${s.name}</option>`);
-        $('#filterSport').find('option:not(:first)').remove(); // pt eliminarea duplicatelor
-        $('#filterSport').append(options.join(''));
+function loadLatestNews() {
+    $.get('http://localhost:3000/api/news', function(articles) {
+        const newsHTML = articles.map(art => `
+            <div class="article-card">
+            <img src="${art.image}" alt="News">
+            <div class="article-meta">2026 | ${art.category}</div>
+            <h3>${art.title}</h3>
+            <a href="${art.url}" target="_blank">Read Official Story ↗</a>
+            </div>
+`).join('');
+
+$('#latestNewsContainer').html(newsHTML);
+    });
+}
+
+$(document).ready(function() {
+    loadLatestNews();
+});
+
+$(document).ready(function() {
+    loadLatestNews();
+});
+
+function openFullArticle(id) {
+    $.get(`${API_BASE}/news/${id}`, function(article) {
+        $('#modal-title').text(article.title);
+        $('#modal-body').html(`
+            <img src="${article.image_url}" style="width:100%; border-radius:10px; margin-bottom:15px;">
+            <p><strong>${article.date} | ${article.category}</strong></p>
+            <div style="font-size:1.1rem; line-height:1.6;">${article.content}</div>
+        `);
+        $('#news-modal').fadeIn();
     });
 }
 
@@ -214,34 +185,53 @@ function renderAthletesTable(data) {
     const rows = data.map(a => `
         <tr>
             <td><strong>${a.athlete_id}</strong></td>
-            <td>${a.first_name}</td>
-            <td>${a.last_name}</td>
-            <td>${a.country}</td>
-            <td>${a.sport}</td>
+            <td>${a.first_name}</td><td>${a.last_name}</td>
+            <td>${a.country || 'N/A'}</td><td>${a.sport || 'N/A'}</td>
             <td>
                 <button class="edit-btn" onclick="editAthlete(${a.athlete_id}, '${a.first_name}', '${a.last_name}')">Edit</button>
                 <button class="delete-btn" onclick="deleteAthlete(${a.athlete_id})">Delete</button>
             </td>
-        </tr>
-    `);
+        </tr>`);
     $('#athletesTable tbody').html(rows.join(''));
 }
 
 function deleteAthlete(id) {
-    if (confirm("Sigur ștergi sportivul? Toate medaliile lui vor fi eliminate!")) {
-        $.ajax({ 
-            url: `${API_BASE}/athletes/${id}`, 
-            type: 'DELETE', 
-            success: function() { loadData(); } 
-        });
+    if (confirm("Ștergi sportivul?")) {
+        $.ajax({ url: `${API_BASE}/athletes/${id}`, type: 'DELETE', success: () => loadData() });
     }
 }
 
-function editAthlete(id, firstName, lastName) {
-    $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeOut(300, function() {
+function editAthlete(id, f, l) {
+    $('#form-atlet, #form-medalie, #lista-atleti, #lista-medalii').fadeOut(300, () => {
         $('#edit-athlete-id').val(id);
-        $('#edit-fName').val(firstName);
-        $('#edit-lName').val(lastName);
+        $('#edit-fName').val(f);
+        $('#edit-lName').val(l);
         $('#edit-section').fadeIn();
+    });
+}
+
+function loadMedalRankings() {
+    $.get(`${API_BASE}/medals_country`, (data) => {
+        const rows = data.map((r, i) => `<tr><td>${i+1}</td><td>${r.country}</td><td>${r.gold}</td><td>${r.silver}</td><td>${r.bronze}</td><td>${r.total}</td></tr>`);
+        $('#rankingsTable tbody').html(rows.join(''));
+    });
+}
+
+function populateSportFilter() {
+    $.get(`${API_BASE}/sports`, (sports) => {
+        $('#filterSport').append(sports.map(s => `<option value="${s.name}">${s.name}</option>`).join(''));
+    });
+}
+
+function initNewsDragScroll() {
+    const slider = document.querySelector('.news-slider');
+    if(!slider) return;
+    let isDown = false, startX, scrollLeft;
+    slider.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
+    slider.addEventListener('mouseup', () => isDown = false);
+    slider.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        const x = e.pageX - slider.offsetLeft;
+        slider.scrollLeft = scrollLeft - (x - startX) * 2;
     });
 }

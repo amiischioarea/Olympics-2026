@@ -35,15 +35,24 @@ module.exports = (db) => {
         });
     });
 
-    router.get('/', (req, res) => {
-    const sql = `SELECT * FROM Athletes ORDER BY last_name ASC`; 
-    
+router.get('/', (req, res) => {
+    const sql = `
+        SELECT 
+            a.athlete_id, 
+            a.first_name, 
+            a.last_name, 
+            c.name AS country, 
+            s.name AS sport 
+        FROM Athletes a
+        LEFT JOIN Countries c ON a.country_id = c.country_id
+        LEFT JOIN Sports s ON a.sport_id = s.sport_id
+        ORDER BY a.last_name ASC`; 
+
     db.all(sql, [], (err, rows) => {
         if (err) {
-            console.error("Eroare SQL:", err.message);
+            console.error("Erorr SELECT Athletes:", err.message);
             return res.status(500).json({ error: err.message });
         }
-        console.log("Date trimise către frontend:", rows.length, "rânduri");
         res.json(rows);
     });
 });
