@@ -13,4 +13,8 @@ The repository is organized into two main components:
 - **Robust Validation**: backend schema validation using the `Joi` library 
 - **Dynamic Interface**: real-time search and sport-based filtering 
 - **Optimized Architecture**: data processing handled efficiently via SQL 
-- **User Experience**: custom splash screen and local storage persistence for search queries.
+- **User Experience**: custom splash screen and local storage persistence for search queries
+-  **Advanced UI/UX System**: 
+    - **Dual Theme Support**: integrated **Dark Mode** 
+    - **Interactive News Slider**: dynamic news feed with horizontal scrolling 
+    - **Custom Experience**: animated splash screen 
